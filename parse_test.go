@@ -10,6 +10,7 @@ import (
 type Result struct {
 	ID    int    `jsonpath:"$.data._id"`
 	Value string `jsonpath:"$.data.value"`
+	Other int
 }
 
 func TestParseJsonpath(t *testing.T) {

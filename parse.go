@@ -23,9 +23,20 @@ func Lookup(pattern string, i interface{}) (interface{}, error) {
 	return jpath.Lookup(i)
 }
 
+func getTaggedField(i interface{}) []*structs.Field {
+	fields := structs.New(i).Fields()
+	out := make([]*structs.Field, 0, len(fields))
+	for _, f := range fields {
+		if f.Tag(DefaultTagName) != "" {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
 func parseJsonpath(in interface{}, out interface{}) (map[string]interface{}, error) {
-	fields := structs.New(out).Fields()
 	obj := make(map[string]interface{})
+	fields := getTaggedField(out)
 	for _, f := range fields {
 		tag := f.Tag(DefaultTagName)
 		fieldValue := f.Value()
