@@ -11,6 +11,7 @@ type Result struct {
 	ID    int    `jsonpath:"$.data._id"`
 	Value string `jsonpath:"$.data.value"`
 	Other int
+	Omit  string `jsonpath:"$.notexistpath,omitempty"`
 }
 
 func TestParseJsonpath(t *testing.T) {
