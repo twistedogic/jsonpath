@@ -1,10 +1,10 @@
 package jsonpath
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/fatih/structs"
+	json "github.com/json-iterator/go"
 	"github.com/mitchellh/mapstructure"
 	"github.com/oliveagle/jsonpath"
 )
@@ -91,8 +91,6 @@ func Unmarshal(b []byte, i interface{}) error {
 	switch v := i.(type) {
 	case Unmarshaler:
 		return v.UnmarshalJSONPath(b)
-	case json.Unmarshaler:
-		return v.UnmarshalJSON(b)
 	}
 	var in interface{}
 	if err := json.Unmarshal(b, &in); err != nil {
