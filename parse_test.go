@@ -13,8 +13,8 @@ type Nested struct {
 }
 
 type Result struct {
-	ID     int    `jsonpath:"$.data._id"`
-	Value  string `jsonpath:"$.data.value"`
+	ID     int    `jsonpath:"$.data._id,omitempty"`
+	Value  string `jsonpath:"$.data.value,omitempty"`
 	Other  int
 	Omit   string `jsonpath:"$.notexistpath,omitempty"`
 	Nested Nested `jsonpath:"$.nested, omitempty"`
@@ -84,16 +84,10 @@ func TestParseJsonpath(t *testing.T) {
 		"malform": {
 			input: []byte(`{
 				"test": 1, 
-				"data": {
-					"_id": 123123, 
-					"value": "something"
-				},
+				"data": [],
 				"nested":[]
 			}`),
-			want: Result{
-				Value: "something",
-				ID:    123123,
-			},
+			want:     Result{},
 			hasError: false,
 		},
 	}

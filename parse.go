@@ -60,8 +60,15 @@ func getTaggedField(i interface{}, parentOmit bool) []Field {
 	return out
 }
 
-func MatchType(in, out interface{}) bool {
-	return reflect.TypeOf(in) == reflect.TypeOf(out)
+func IsValue(in interface{}) bool {
+	inKind := reflect.TypeOf(in).Kind()
+	switch {
+	case inKind == reflect.Slice:
+		return false
+	case inKind == reflect.Struct:
+		return false
+	}
+	return true
 }
 
 func parseJsonpath(in interface{}, out interface{}, omit bool) (map[string]interface{}, error) {
@@ -80,10 +87,11 @@ func parseJsonpath(in interface{}, out interface{}, omit bool) (map[string]inter
 					obj[f.Name] = nested
 				}
 			} else {
-				if !MatchType(value, f.Value) && f.OmitEmpty {
-					continue
+				if !IsValue(value) && f.OmitEmpty {
+					obj[f.Name] = f.Value
+				} else {
+					obj[f.Name] = value
 				}
-				obj[f.Name] = value
 			}
 		}
 	}
