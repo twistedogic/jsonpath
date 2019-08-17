@@ -1,6 +1,7 @@
 package jsonpath
 
 import (
+	"reflect"
 	"strings"
 
 	"github.com/fatih/structs"
@@ -33,7 +34,7 @@ type Field struct {
 	OmitEmpty bool
 }
 
-func getTaggedField(i interface{}) []Field {
+func getTaggedField(i interface{}, parentOmit bool) []Field {
 	fields := structs.New(i).Fields()
 	out := make([]Field, 0, len(fields))
 	for _, f := range fields {
@@ -42,23 +43,30 @@ func getTaggedField(i interface{}) []Field {
 			tokens := strings.Split(tag, ",")
 			path, other := tokens[0], tokens[1:]
 			omit := false
-			if len(other) > 0 {
-				omit = other[0] == OmitEmpty
+			for _, o := range other {
+				if strings.TrimSpace(o) == OmitEmpty {
+					omit = true
+					break
+				}
 			}
 			out = append(out, Field{
 				Name:      f.Name(),
 				Value:     f.Value(),
 				Pattern:   path,
-				OmitEmpty: omit,
+				OmitEmpty: omit || parentOmit,
 			})
 		}
 	}
 	return out
 }
 
-func parseJsonpath(in interface{}, out interface{}) (map[string]interface{}, error) {
+func MatchType(in, out interface{}) bool {
+	return reflect.TypeOf(in) == reflect.TypeOf(out)
+}
+
+func parseJsonpath(in interface{}, out interface{}, omit bool) (map[string]interface{}, error) {
 	obj := make(map[string]interface{})
-	fields := getTaggedField(out)
+	fields := getTaggedField(out, omit)
 	for _, f := range fields {
 		value, err := Lookup(f.Pattern, in)
 		switch {
@@ -66,12 +74,15 @@ func parseJsonpath(in interface{}, out interface{}) (map[string]interface{}, err
 			return obj, err
 		case err == nil:
 			if structs.IsStruct(f.Value) {
-				nested, err := parseJsonpath(value, f.Value)
-				if err != nil {
+				if nested, err := parseJsonpath(value, f.Value, f.OmitEmpty); err != nil {
 					return obj, err
+				} else {
+					obj[f.Name] = nested
 				}
-				obj[f.Name] = nested
 			} else {
+				if !MatchType(value, f.Value) && f.OmitEmpty {
+					continue
+				}
 				obj[f.Name] = value
 			}
 		}
@@ -80,7 +91,7 @@ func parseJsonpath(in interface{}, out interface{}) (map[string]interface{}, err
 }
 
 func ParseJsonpath(in interface{}, out interface{}) error {
-	obj, err := parseJsonpath(in, out)
+	obj, err := parseJsonpath(in, out, false)
 	if err != nil {
 		return err
 	}
