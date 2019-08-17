@@ -61,6 +61,9 @@ func getTaggedField(i interface{}, parentOmit bool) []Field {
 }
 
 func IsValue(in interface{}) bool {
+	if in == nil {
+		return false
+	}
 	inKind := reflect.TypeOf(in).Kind()
 	switch {
 	case inKind == reflect.Slice:
@@ -79,6 +82,8 @@ func parseJsonpath(in interface{}, out interface{}, omit bool) (map[string]inter
 		switch {
 		case err != nil && !f.OmitEmpty:
 			return obj, err
+		case value == nil:
+			continue
 		case err == nil:
 			if structs.IsStruct(f.Value) {
 				if nested, err := parseJsonpath(value, f.Value, f.OmitEmpty); err != nil {
